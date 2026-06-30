@@ -1,0 +1,138 @@
+random_seed: 42
+multi_gpu: false
+gpu_device_id: '0'
+isPretrain: false
+isResume: false
+result_group: EEG_TopoEncoder_SEED_IV_Default
+pretrain: ''
+resume: ./resume/SEED_IV/model_resume.pt
+epoch_save_freq: 5
+checkpoint_loader_mode: from_scratch
+
+data:
+  dataset: SEED_IV
+  datasets_path: /home/user4/SEED_IV_depsd_2S4F6B_welch_EmotionCLIP
+  num_classes: 4
+  subject_dependent_num_train: 15
+  num_trial: 24
+  classes_names: [neutral, sad, fear, happy]
+  test_size: 0.2
+  num_shot: 32
+  workers: 8
+
+wandb_data:
+  project: EmotionCLIP
+  name: EEG_TopoEncoder_SEED_IV
+  desc: EEG_TopoEncoder_SEED_IV
+
+network:
+  image_frames: 4
+  image_channels: 6
+  image_height: 64
+  image_width: 64
+  tubelet_frames: 1
+  tubelet_channels: 1
+  tubelet_height: 16
+  tubelet_width: 16
+  num_transformer_layers: [2, 2, 2]
+  embed_dims: 128
+  hidden_dims: 512
+  multi_conv2d_hidden_dims: 128
+  num_heads: 4
+  operator_order: Spatial-Spectral-Temporal
+  attn_dropout: 0.0
+  attn_proj_dropout: 0.0
+  ffn_proj_dropout: 0.1
+  multi_conv_dropout: 0.1
+  dropout_after_pos_embed: 0.3
+  drop_path_rate: 0.1
+  conv_type: Conv_Stem
+  spatial_type: Multi_Conv2D
+  spectral_type: Transformer
+  temporal_type: Transformer
+  use_spectral_pos_embedding: false
+  model_type: 2
+  feature: DE
+  preserve_temporal: true
+  eeg_topoencoder_cfbm:
+    enabled: false
+    mode: spatial_gaussian
+    kernel_size: null
+    sigma: null
+
+solver:
+  train_batch_size: 64
+  val_batch_size: 64
+  num_epochs: 200
+  is_early_patience: true
+  early_patience: 50
+  start_epoch: 0
+  lr_type: Cosine
+  lr: 0.0001
+  lr_warmup_step: 5
+  lr_adjust_epoch: 0.5
+  momentum: 0.9
+  weight_decay: 0.003
+  lr_decay_step: 15
+  milestones: [20, 40, 60]
+  optim: AdamW
+  ratio: 1
+  f_ratio: 10
+  logit_scale: 1.0
+
+etea_cgra:
+  enabled: false
+  version: etea_cgra_warmstart_freeze
+  baseline_checkpoint: auto
+  baseline_checkpoint_root: null
+  baseline_protocol: null
+  freeze_backbone: true
+  train_residual_only: true
+  alpha: 0.02
+  hidden_ratio: 0.25
+  dropout: 0.0
+  gate_type: scalar
+  detach_confidence: true
+  normalize_features: true
+  residual_zero_init: true
+  gate_init_bias: -2.0
+  debug_shapes: false
+  loss:
+    ce1_weight: 1.0
+    lambda_gate: 0.0
+    lambda_xshift: 0.005
+    log_ce0_only: true
+
+experiments:
+  pretrain:
+    result_group: SEEDIV_EEG_TopoEncoder_Pretrain
+    pretrain: ./pretrain_weights/SEED_IV_EEG_TopoEncoder/Transformer/model_best.pt
+    checkpoint_loader_mode: from_scratch
+    wandb_name: SEEDIV_EEG_TopoEncoder_Pretrain
+  eeg_topoencoder:
+    cross_session:
+      result_group: EEG_TopoEncoder_SEEDIV_CrossSession
+      pretrain: ./pretrain_weights/SEED_IV_EEG_TopoEncoder/Transformer/model_best.pt
+      checkpoint_loader_mode: seediv_eeg_topoencoder_pretrain
+      wandb_name: EEG_TopoEncoder_SEEDIV_CrossSession
+    cross_subject:
+      result_group: EEG_TopoEncoder_SEEDIV_CrossSubject
+      pretrain: ''
+      checkpoint_loader_mode: from_scratch
+      wandb_name: EEG_TopoEncoder_SEEDIV_CrossSubject
+  etea_cgra:
+    cross_session:
+      result_group: ETEA_CGRA_SEEDIV_CrossSession
+      pretrain: ./pretrain_weights/SEED_IV_EEG_TopoEncoder/Transformer/model_best.pt
+      checkpoint_loader_mode: seediv_eeg_topoencoder_pretrain
+      baseline_checkpoint_root: SEED_IV_train_result/EEG_TopoEncoder_SEEDIV_CrossSession
+      baseline_protocol: seediv_cross_session
+      wandb_name: ETEA_CGRA_SEEDIV_CrossSession
+    cross_subject:
+      result_group: ETEA_CGRA_SEEDIV_CrossSubject
+      pretrain: ''
+      checkpoint_loader_mode: from_scratch
+      baseline_checkpoint_root: SEED_IV_train_result/EEG_TopoEncoder_SEEDIV_CrossSubject
+      baseline_protocol: seediv_cross_subject
+      wandb_name: ETEA_CGRA_SEEDIV_CrossSubject
+
